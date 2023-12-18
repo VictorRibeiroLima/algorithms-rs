@@ -1,6 +1,6 @@
 use std::{
     cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
+    collections::{BinaryHeap, HashMap, HashSet},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -88,6 +88,7 @@ impl Graph {
         let destination = destination.to_string().to_uppercase();
         let mut distances: HashMap<Vertex, Path> = HashMap::new();
         let mut heap: BinaryHeap<Reverse<(u32, Vertex)>> = BinaryHeap::new();
+        let mut visited: HashSet<Vertex> = HashSet::new();
         let initial_vertex = self.try_get_vertex(&src)?;
         let path = Path {
             vertexes: vec![initial_vertex.clone()],
@@ -97,6 +98,7 @@ impl Graph {
         heap.push(Reverse((0, initial_vertex.clone())));
 
         while let Some(Reverse((distance, vertex))) = heap.pop() {
+            visited.insert(vertex.clone());
             if vertex.label == destination {
                 return Some(distances);
             }
@@ -107,7 +109,15 @@ impl Graph {
                 continue;
             }
 
-            let edges = self.get_vertex_src_edges(&vertex);
+            let edges: Vec<&Edge> = self
+                .get_vertex_src_edges(&vertex)
+                .iter()
+                .filter(|e| {
+                    let dst = &e.dst;
+                    !visited.contains(dst)
+                })
+                .map(|e| *e)
+                .collect();
 
             for edge in edges {
                 let next = edge.dst.clone();

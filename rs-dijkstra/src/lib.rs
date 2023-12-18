@@ -152,39 +152,58 @@ impl Graph {
     }
 }
 
-/*
-
-   Market - 6 - Restaurant
-     |         /       |
-     |       /         |
-     2     9           20
-     |   /             |
-     | /               |
-   Farm - 5 --------Factory
-*/
 #[cfg(test)]
 mod test {
     use crate::Graph;
 
-    #[test]
-    fn test_dijkstra() {
+    /*
+
+       Market - 6 -  Restaurant
+         |           /     |   \
+         |         /       |    \
+         |       /         |     20
+         2     9           20     \
+         |   /             |       \
+         | /               |        \
+       Farm - 5 --------Factory--40--Road
+       |
+       |
+       |
+       1
+       |
+       Home
+    */
+    fn create_graph() -> Graph {
         let mut graph = Graph::new();
         graph.add_vertex("Farm");
         graph.add_vertex("Market");
         graph.add_vertex("Restaurant");
         graph.add_vertex("Factory");
+        graph.add_vertex("Home");
+        graph.add_vertex("Road");
 
         graph.add_double_edge(5, "Farm", "Factory").unwrap();
         graph.add_double_edge(2, "Farm", "Market").unwrap();
         graph.add_double_edge(9, "Farm", "Restaurant").unwrap();
+        graph.add_double_edge(1, "Farm", "Home").unwrap();
 
         graph.add_edge(6, "Market", "Restaurant").unwrap();
 
         graph.add_double_edge(20, "Factory", "Restaurant").unwrap();
+        graph.add_double_edge(40, "Factory", "Road").unwrap();
+
+        graph.add_double_edge(20, "Restaurant", "Road").unwrap();
+
+        graph
+    }
+
+    #[test]
+    fn test_dijkstra() {
+        let graph = create_graph();
 
         let result = graph.dijkstra("Market", "Factory").unwrap();
 
-        assert_eq!(result.len(), 4);
+        assert_eq!(result.len(), 6);
 
         graph.try_get_vertex("FARM").unwrap();
         graph.try_get_vertex("MARKET").unwrap();
@@ -194,19 +213,7 @@ mod test {
 
     #[test]
     fn test_shortest_path_weight() {
-        let mut graph = Graph::new();
-        graph.add_vertex("Farm");
-        graph.add_vertex("Market");
-        graph.add_vertex("Restaurant");
-        graph.add_vertex("Factory");
-
-        graph.add_double_edge(5, "Farm", "Factory").unwrap();
-        graph.add_double_edge(2, "Farm", "Market").unwrap();
-        graph.add_double_edge(9, "Farm", "Restaurant").unwrap();
-
-        graph.add_edge(6, "Market", "Restaurant").unwrap();
-
-        graph.add_double_edge(20, "Factory", "Restaurant").unwrap();
+        let graph = create_graph();
 
         let result = graph.shortest_path_weight("Market", "Factory").unwrap();
         assert_eq!(result, 7)
@@ -214,19 +221,7 @@ mod test {
 
     #[test]
     fn test_shortest_path() {
-        let mut graph = Graph::new();
-        graph.add_vertex("Farm");
-        graph.add_vertex("Market");
-        graph.add_vertex("Restaurant");
-        graph.add_vertex("Factory");
-
-        graph.add_double_edge(5, "Farm", "Factory").unwrap();
-        graph.add_double_edge(2, "Farm", "Market").unwrap();
-        graph.add_double_edge(9, "Farm", "Restaurant").unwrap();
-
-        graph.add_edge(6, "Market", "Restaurant").unwrap();
-
-        graph.add_double_edge(20, "Factory", "Restaurant").unwrap();
+        let graph = create_graph();
 
         let path = graph.shortest_path("Market", "Factory").unwrap();
         let weight = path.weight();
@@ -241,19 +236,7 @@ mod test {
 
     #[test]
     fn test_shortest_path2() {
-        let mut graph = Graph::new();
-        graph.add_vertex("Farm");
-        graph.add_vertex("Market");
-        graph.add_vertex("Restaurant");
-        graph.add_vertex("Factory");
-
-        graph.add_double_edge(5, "Farm", "Factory").unwrap();
-        graph.add_double_edge(2, "Farm", "Market").unwrap();
-        graph.add_double_edge(9, "Farm", "Restaurant").unwrap();
-
-        graph.add_edge(6, "Market", "Restaurant").unwrap();
-
-        graph.add_double_edge(20, "Factory", "Restaurant").unwrap();
+        let graph = create_graph();
 
         let path = graph.shortest_path("Factory", "Restaurant").unwrap();
         let weight = path.weight();
@@ -265,5 +248,22 @@ mod test {
         assert_eq!(result[1].label, "FARM");
         assert_eq!(result[2].label, "MARKET");
         assert_eq!(result[3].label, "RESTAURANT");
+    }
+
+    #[test]
+    fn test_shortest_path3() {
+        let graph = create_graph();
+
+        let path = graph.shortest_path("Home", "Road").unwrap();
+        let weight = path.weight();
+        let result = path.vertexes;
+        println!("{:?}", result);
+        assert_eq!(weight, 29);
+        assert_eq!(result.len(), 5);
+        assert_eq!(result[0].label, "HOME");
+        assert_eq!(result[1].label, "FARM");
+        assert_eq!(result[2].label, "MARKET");
+        assert_eq!(result[3].label, "RESTAURANT");
+        assert_eq!(result[4].label, "ROAD");
     }
 }
